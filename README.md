@@ -12,7 +12,7 @@
 ## 📸 Screenshots
 
 ### Main Interface - Translation in Progress
-![Advanced Subtitle Translator GUI](docs/screenshots/main-interface.png)
+![Advanced Subtitle Translator GUI](docs/screenshots/1.jpg)
 
 *The modern GUI interface showing a translation in progress with all features visible: file selection, language detection, format options, and real-time progress tracking.*
 
@@ -104,10 +104,10 @@ python run_gui.py
 
 | Feature | Screenshot | Description |
 |---------|------------|-------------|
-| **Main Interface** | ![Main GUI](docs/screenshots/main-interface.png) | Complete translation interface with all controls |
-| **Batch Processing** | ![Batch](docs/screenshots/batch-processing.png) | Process multiple subtitle files simultaneously |
-| **Settings Panel** | ![Settings](docs/screenshots/settings-panel.png) | Comprehensive configuration options |
-| **Statistics View** | ![Stats](docs/screenshots/statistics-view.png) | Performance analytics and cache statistics |
+| **Main Interface** | ![Main GUI](docs/screenshots/1.jpg) | Complete translation interface with all controls |
+| **Batch Processing** | ![Batch](docs/screenshots/2.jpg) | Process multiple subtitle files simultaneously |
+| **Settings Panel** | ![Settings](docs/screenshots/3.jpg) | Comprehensive configuration options |
+| **Statistics View** | | Performance analytics and cache statistics |
 
 </div>
 
@@ -275,8 +275,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Getting Help
 - 📖 [Documentation](docs/)
-- 🐛 [Issue Tracker](https://github.com/yourusername/advanced-subtitle-translator/issues)
-- 💬 [Discussions](https://github.com/yourusername/advanced-subtitle-translator/discussions)
+- 🐛 [Issue Tracker](https://github.com/bo3bdo/advanced-subtitle-translator/issues)
+- 💬 [Discussions](https://github.com/bo3bdo/advanced-subtitle-translator/discussions)
 
 ### Community
 - ⭐ Star this repository if you find it useful
@@ -304,7 +304,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by the Advanced Subtitle Translator Team**
+**Made with ❤️ by the Hamad**
 
 [⬆ Back to Top](#advanced-subtitle-translator-)
 
