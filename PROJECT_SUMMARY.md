@@ -2,7 +2,7 @@
 
 ## 📋 Project Overview
 
-**Advanced Subtitle Translator v2.1.0** is a comprehensive desktop application for translating subtitle files with a modern GUI, intelligent caching, and multi-format support.
+**Advanced Subtitle Translator v2.2.2** is a comprehensive desktop application for translating subtitle files with a modern GUI, intelligent caching, progress saving, and multi-format support.
 
 ---
 
@@ -33,7 +33,7 @@ advanced-subtitle-translator/
 │   ├── GUI_USER_GUIDE.md          # Complete GUI user guide
 │   ├── USER_GUIDE_v2.md           # Updated CLI user guide
 │   ├── CHANGELOG.md               # Detailed change history
-│   ├── RELEASE_NOTES_v2.1.0.md    # Release documentation
+│   ├── RELEASE_NOTES_v2.2.2.md    # Release documentation
 │   └── CONTRIBUTING.md            # Contribution guidelines
 │
 ├── ⚙️ Configuration Files
@@ -332,6 +332,6 @@ Your Advanced Subtitle Translator project is now fully documented and ready for 
 
 ---
 
-**Advanced Subtitle Translator v2.1.0**  
+**Advanced Subtitle Translator v2.2.2**  
 *Made with ❤️ by the Advanced Subtitle Translator Team*  
 *Licensed under MIT License*

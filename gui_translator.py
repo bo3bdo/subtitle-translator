@@ -20,6 +20,7 @@ from config import Config
 from subtitle_formats import SubtitleFormatHandler
 from language_detector import LanguageDetector
 from localization import LocalizationManager
+from progress_saver import ProgressSaver
 
 class SubtitleTranslatorGUI:
     """Advanced GUI for Subtitle Translator with drag & drop support"""
@@ -32,6 +33,7 @@ class SubtitleTranslatorGUI:
         self.translator = SubtitleTranslator()
         self.format_handler = SubtitleFormatHandler()
         self.language_detector = LanguageDetector()
+        self.progress_saver = ProgressSaver()
         
         # Initialize localization
         ui_language = self.config.get('ui_language', 'en')
@@ -721,6 +723,13 @@ class SubtitleTranslatorGUI:
             
         print("✅ Validation passed")
         
+        # Reset current session if not resuming
+        if not (self.progress_saver.current_session and 
+                self.progress_saver.current_session.get('input_file') == self.input_file_var.get()):
+            # Starting a new translation, reset any existing session
+            self.progress_saver.current_session = None
+            print("🔄 Reset session for new translation")
+        
         # Disable controls
         self.set_translation_controls(False)
         print(f"🔧 Controls disabled, is_translating: {self.is_translating}")
@@ -786,6 +795,7 @@ class SubtitleTranslatorGUI:
         print("📝 Translation worker started")
         print(f"🔍 is_translating: {self.is_translating}")
         
+        session_id = None
         try:
             input_file = self.input_file_var.get()
             output_file = self.output_file_var.get()
@@ -829,21 +839,55 @@ class SubtitleTranslatorGUI:
             self.translator.config.set('default_source_language', source_lang)
             print(f"🔧 Set source language to: {source_lang}")
             
+            # Check if we're resuming a session or starting a new one
+            start_index = 0
+            if self.progress_saver.current_session:
+                # Resuming existing session
+                session_id = self.progress_saver.current_session['session_id']
+                start_index = self.progress_saver.get_completed_count()
+                print(f"🔄 Resuming session {session_id} from subtitle {start_index + 1}")
+            else:
+                # Create new session
+                session_id = self.progress_saver.create_session(
+                    input_file, output_file, source_lang, target_lang, total_subtitles
+                )
+                print(f"🆕 Created new session {session_id}")
+            
             # Translate subtitles
             translated_subtitles = []
             for i, subtitle in enumerate(subtitles):
                 if not self.is_translating:
                     print("⏹ Translation stopped by user")
+                    # Cancel the session
+                    if session_id:
+                        self.progress_saver.cancel_session()
                     break
                     
                 progress = 20 + (i / total_subtitles) * 70
                 self.update_progress(progress, f"Translating subtitle {i+1}/{total_subtitles}...")
+                
+                # If resuming, skip already completed subtitles
+                if i < start_index:
+                    translated_subtitles.append(subtitle)
+                    continue
                 
                 text = subtitle.get('text', '')
                 if text.strip():
                     translated_text = self.translator.translate_text(text, target_lang)
                     subtitle['text'] = translated_text
                     print(f"✅ Translated: '{text[:50]}...' → '{translated_text[:50]}...'")
+                    
+                    # Save progress with translated item
+                    translated_item = {
+                        'original': text,
+                        'translated': translated_text,
+                        'start_time': subtitle.get('start', ''),
+                        'end_time': subtitle.get('end', '')
+                    }
+                    self.progress_saver.save_progress(i + 1, translated_item)
+                else:
+                    # Save progress even for empty/skipped items
+                    self.progress_saver.save_progress(i + 1)
                 
                 translated_subtitles.append(subtitle)
             
@@ -854,19 +898,40 @@ class SubtitleTranslatorGUI:
                                                   self.output_format_var.get())
                 
                 print(f"💾 Output file written: {output_file}")
+                
+                # Complete the session
+                if session_id:
+                    self.progress_saver.complete_session()
+                    print(f"✅ Session {session_id} completed successfully")
+                
                 self.update_progress(100, "Translation completed successfully!")
                 
                 # Show success message
+                success_msg = (f"تمت الترجمة بنجاح!\nالملف: {os.path.basename(output_file)}"
+                              if self.localization.language == 'ar'
+                              else f"Translation completed!\nOutput: {os.path.basename(output_file)}")
+                
                 self.root.after(0, lambda: messagebox.showinfo(
-                    "Success", f"Translation completed!\nOutput: {os.path.basename(output_file)}"))
+                    self.localization.get('success', 'Success'), success_msg))
             else:
                 print("⏹ Translation was stopped")
+                # Session was already cancelled above
                 self.root.after(0, lambda: self.update_progress(0, "Translation stopped by user"))
                 
         except Exception as e:
             error_msg = f"Translation failed: {str(e)}"
             print(f"❌ {error_msg}")
-            self.root.after(0, lambda: messagebox.showerror("Error", error_msg))
+            
+            # Cancel the session if there was an error
+            if session_id:
+                self.progress_saver.cancel_session()
+                print(f"❌ Session {session_id} cancelled due to error")
+            
+            error_display = (f"فشل في الترجمة: {str(e)}" if self.localization.language == 'ar'
+                           else f"Translation failed: {str(e)}")
+            
+            self.root.after(0, lambda: messagebox.showerror(
+                self.localization.get('error', 'Error'), error_display))
             self.root.after(0, lambda: self.update_progress(0, "Translation failed"))
         finally:
             print("🔄 Re-enabling controls")
@@ -1326,6 +1391,9 @@ Cache Performance:
         self.refresh_stats()
         self.load_settings_to_gui()
         
+        # Check for incomplete sessions on startup
+        self.check_incomplete_sessions()
+        
         # Set status message based on language
         ready_message = (f"{self.localization.get('ready')} - {self.localization.get('drag_files_here')}" 
                         if self.localization.language == 'ar' 
@@ -1335,6 +1403,164 @@ Cache Performance:
         
         # Start main loop
         self.root.mainloop()
+    
+    def check_incomplete_sessions(self):
+        """فحص الجلسات غير المكتملة عند بدء التشغيل"""
+        try:
+            incomplete_sessions = self.progress_saver.find_incomplete_sessions()
+            
+            if incomplete_sessions:
+                # عرض حوار لاختيار استكمال الترجمة
+                self.show_resume_dialog(incomplete_sessions)
+        
+        except Exception as e:
+            print(f"Error checking incomplete sessions: {e}")
+    
+    def show_resume_dialog(self, incomplete_sessions):
+        """عرض حوار استكمال الترجمة"""
+        if not incomplete_sessions:
+            return
+        
+        # إنشاء نافذة منبثقة
+        resume_window = tk.Toplevel(self.root)
+        resume_window.title("استكمال الترجمة - Resume Translation" if self.localization.language == 'ar' else "Resume Translation")
+        resume_window.geometry("600x400")
+        resume_window.resizable(True, True)
+        
+        # جعل النافذة في المقدمة
+        resume_window.transient(self.root)
+        resume_window.grab_set()
+        
+        # العنوان الرئيسي
+        title_text = ("تم العثور على ترجمات غير مكتملة" if self.localization.language == 'ar' 
+                     else "Incomplete translations found")
+        
+        title_label = ttk.Label(resume_window, text=title_text, font=('Arial', 12, 'bold'))
+        title_label.pack(pady=10)
+        
+        # الرسالة التوضيحية
+        info_text = ("يمكنك استكمال الترجمة من حيث توقفت:" if self.localization.language == 'ar'
+                    else "You can resume translation from where you left off:")
+        
+        info_label = ttk.Label(resume_window, text=info_text)
+        info_label.pack(pady=5)
+        
+        # قائمة الجلسات
+        sessions_frame = ttk.LabelFrame(resume_window, text="الجلسات المتاحة - Available Sessions", padding=10)
+        sessions_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        
+        # إنشاء جدول للجلسات
+        columns = ('File', 'Progress', 'Languages', 'Last Update')
+        sessions_tree = ttk.Treeview(sessions_frame, columns=columns, show='headings', height=8)
+        
+        # تكوين الأعمدة
+        sessions_tree.heading('File', text='ملف - File')
+        sessions_tree.heading('Progress', text='التقدم - Progress')
+        sessions_tree.heading('Languages', text='اللغات - Languages')
+        sessions_tree.heading('Last Update', text='آخر تحديث - Last Update')
+        
+        sessions_tree.column('File', width=200)
+        sessions_tree.column('Progress', width=100)
+        sessions_tree.column('Languages', width=100)
+        sessions_tree.column('Last Update', width=150)
+        
+        # إضافة البيانات
+        for session in incomplete_sessions:
+            file_name = Path(session['input_file']).name
+            completed = session.get('completed_subtitles', 0)
+            total = session.get('total_subtitles', 1)
+            progress = f"{completed}/{total} ({(completed/total)*100:.1f}%)"
+            languages = f"{session.get('source_lang', 'auto')} → {session.get('target_lang', 'ar')}"
+            last_update = session.get('updated_at', '')[:16].replace('T', ' ')
+            
+            sessions_tree.insert('', 'end', values=(file_name, progress, languages, last_update))
+        
+        sessions_tree.pack(fill='both', expand=True)
+        
+        # إضافة scrollbar
+        scrollbar = ttk.Scrollbar(sessions_frame, orient='vertical', command=sessions_tree.yview)
+        sessions_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side='right', fill='y')
+        
+        # أزرار التحكم
+        buttons_frame = ttk.Frame(resume_window)
+        buttons_frame.pack(fill='x', padx=10, pady=10)
+        
+        def resume_selected():
+            selection = sessions_tree.selection()
+            if selection:
+                index = sessions_tree.index(selection[0])
+                selected_session = incomplete_sessions[index]
+                self.resume_translation_session(selected_session)
+                resume_window.destroy()
+        
+        def delete_selected():
+            selection = sessions_tree.selection()
+            if selection:
+                index = sessions_tree.index(selection[0])
+                selected_session = incomplete_sessions[index]
+                
+                confirm_text = ("هل تريد حذف هذه الجلسة؟" if self.localization.language == 'ar'
+                              else "Delete this session?")
+                
+                if messagebox.askyesno("تأكيد - Confirm", confirm_text):
+                    self.progress_saver.delete_session(selected_session['session_id'])
+                    sessions_tree.delete(selection[0])
+                    incomplete_sessions.pop(index)
+        
+        def skip_all():
+            resume_window.destroy()
+        
+        # الأزرار
+        resume_btn_text = "استكمال المحدد - Resume Selected" if self.localization.language == 'ar' else "Resume Selected"
+        delete_btn_text = "حذف المحدد - Delete Selected" if self.localization.language == 'ar' else "Delete Selected"
+        skip_btn_text = "تخطي الكل - Skip All" if self.localization.language == 'ar' else "Skip All"
+        
+        ttk.Button(buttons_frame, text=resume_btn_text, command=resume_selected).pack(side='left', padx=5)
+        ttk.Button(buttons_frame, text=delete_btn_text, command=delete_selected).pack(side='left', padx=5)
+        ttk.Button(buttons_frame, text=skip_btn_text, command=skip_all).pack(side='right', padx=5)
+        
+        # توسيط النافذة
+        resume_window.update_idletasks()
+        x = (resume_window.winfo_screenwidth() // 2) - (resume_window.winfo_width() // 2)
+        y = (resume_window.winfo_screenheight() // 2) - (resume_window.winfo_height() // 2)
+        resume_window.geometry(f"+{x}+{y}")
+    
+    def resume_translation_session(self, session_data):
+        """استكمال جلسة ترجمة موجودة"""
+        try:
+            # تحميل بيانات الجلسة
+            self.input_file_var.set(session_data['input_file'])
+            self.output_file_var.set(session_data['output_file'])
+            self.target_lang_var.set(session_data['target_lang'])
+            
+            # تحديث الواجهة
+            self.detect_input_format()
+            
+            # استكمال الجلسة
+            resumed_session = self.progress_saver.resume_session(session_data)
+            
+            # عرض رسالة تأكيد
+            completed = resumed_session.get('completed_subtitles', 0)
+            total = resumed_session.get('total_subtitles', 0)
+            
+            confirm_text = (f"سيتم استكمال الترجمة من العنصر {completed + 1} من أصل {total}"
+                          if self.localization.language == 'ar'
+                          else f"Translation will resume from item {completed + 1} of {total}")
+            
+            messagebox.showinfo("استكمال الترجمة - Resume Translation", confirm_text)
+            
+            # تحديث شريط الحالة
+            status_text = (f"جاهز لاستكمال الترجمة - {completed}/{total} مكتمل"
+                         if self.localization.language == 'ar'
+                         else f"Ready to resume translation - {completed}/{total} completed")
+            
+            self.update_status(status_text)
+            
+        except Exception as e:
+            error_text = (f"خطأ في استكمال الترجمة: {e}" if self.localization.language == 'ar'
+                        else f"Error resuming translation: {e}")
+            messagebox.showerror("خطأ - Error", error_text)
 
 if __name__ == "__main__":
     app = SubtitleTranslatorGUI()

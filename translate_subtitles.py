@@ -369,7 +369,7 @@ class SubtitleTranslator:
         
         if ui_lang == 'ar':
             help_text = """
-🔹 مساعدة مترجم الترجمات v2.0
+🔹 مساعدة مترجم الترجمات v2.2.2
 ================================
 
 📋 الميزات الجديدة:
@@ -397,7 +397,7 @@ class SubtitleTranslator:
 """
         else:
             help_text = """
-🔹 Subtitle Translator v2.0 Help
+🔹 Subtitle Translator v2.2.2 Help
 ================================
 
 📋 New Features:

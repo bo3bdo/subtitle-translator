@@ -3,7 +3,7 @@
 Version information for Advanced Subtitle Translator
 """
 
-__version__ = '2.1.0'
+__version__ = '2.2.2'
 __title__ = 'Advanced Subtitle Translator'
 __description__ = 'Advanced GUI application for translating subtitle files'
 __author__ = 'Advanced Subtitle Translator Team'
