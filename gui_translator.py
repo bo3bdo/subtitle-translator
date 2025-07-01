@@ -19,19 +19,26 @@ from translate_subtitles import SubtitleTranslator
 from config import Config
 from subtitle_formats import SubtitleFormatHandler
 from language_detector import LanguageDetector
+from localization import LocalizationManager
 
 class SubtitleTranslatorGUI:
     """Advanced GUI for Subtitle Translator with drag & drop support"""
     
     def __init__(self):
         self.root = tk.Tk()
-        self.setup_window()
         
         # Initialize components
         self.config = Config()
         self.translator = SubtitleTranslator()
         self.format_handler = SubtitleFormatHandler()
         self.language_detector = LanguageDetector()
+        
+        # Initialize localization
+        ui_language = self.config.get('ui_language', 'en')
+        self.localization = LocalizationManager(ui_language)
+        
+        # Setup window after localization is ready
+        self.setup_window()
         
         # GUI state
         self.file_queue = queue.Queue()
@@ -45,7 +52,7 @@ class SubtitleTranslatorGUI:
         
     def setup_window(self):
         """Configure main window"""
-        self.root.title("Advanced Subtitle Translator v2.0")
+        self.root.title(self.localization.get('app_title'))
         self.root.geometry("900x700")
         self.root.minsize(800, 600)
         
@@ -78,53 +85,53 @@ class SubtitleTranslatorGUI:
         """Create single file translation tab"""
         # Translation tab
         self.translation_frame = ttk.Frame(self.notebook)
-        self.notebook.add(self.translation_frame, text="📄 Single File")
+        self.notebook.add(self.translation_frame, text=self.localization.get('tab_single_file'))
         
         # File selection frame
-        file_frame = ttk.LabelFrame(self.translation_frame, text="File Selection", padding=10)
+        file_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('file_selection'), padding=10)
         file_frame.pack(fill='x', padx=10, pady=5)
         
         # Input file
-        ttk.Label(file_frame, text="Input File:").grid(row=0, column=0, sticky='w', pady=2)
+        ttk.Label(file_frame, text=self.localization.get('input_file')).grid(row=0, column=0, sticky='w', pady=2)
         self.input_file_var = tk.StringVar()
         self.input_entry = ttk.Entry(file_frame, textvariable=self.input_file_var, width=50)
         self.input_entry.grid(row=0, column=1, sticky='ew', padx=5, pady=2)
         
-        ttk.Button(file_frame, text="Browse", command=self.browse_input_file).grid(row=0, column=2, padx=5, pady=2)
-        ttk.Button(file_frame, text="Clear", command=self.clear_input_file).grid(row=0, column=3, padx=5, pady=2)
+        ttk.Button(file_frame, text=self.localization.get('browse'), command=self.browse_input_file).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(file_frame, text=self.localization.get('clear'), command=self.clear_input_file).grid(row=0, column=3, padx=5, pady=2)
         
         # Output file
-        ttk.Label(file_frame, text="Output File:").grid(row=1, column=0, sticky='w', pady=2)
+        ttk.Label(file_frame, text=self.localization.get('output_file')).grid(row=1, column=0, sticky='w', pady=2)
         self.output_file_var = tk.StringVar()
         self.output_entry = ttk.Entry(file_frame, textvariable=self.output_file_var, width=50)
         self.output_entry.grid(row=1, column=1, sticky='ew', padx=5, pady=2)
         
-        ttk.Button(file_frame, text="Browse", command=self.browse_output_file).grid(row=1, column=2, padx=5, pady=2)
-        ttk.Button(file_frame, text="Auto", command=self.auto_output_file).grid(row=1, column=3, padx=5, pady=2)
+        ttk.Button(file_frame, text=self.localization.get('browse'), command=self.browse_output_file).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(file_frame, text=self.localization.get('auto'), command=self.auto_output_file).grid(row=1, column=3, padx=5, pady=2)
         
         file_frame.columnconfigure(1, weight=1)
         
         # Language detection frame
-        detection_frame = ttk.LabelFrame(self.translation_frame, text="Language Detection", padding=10)
+        detection_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('language_detection'), padding=10)
         detection_frame.pack(fill='x', padx=10, pady=5)
         
         # Auto-detect source language
         self.auto_detect_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(detection_frame, text="Auto-detect source language", 
+        ttk.Checkbutton(detection_frame, text=self.localization.get('auto_detect_source'), 
                        variable=self.auto_detect_var, command=self.toggle_source_detection).pack(anchor='w')
         
         # Source language selection
         lang_frame = ttk.Frame(detection_frame)
         lang_frame.pack(fill='x', pady=5)
         
-        ttk.Label(lang_frame, text="Source Language:").pack(side='left')
+        ttk.Label(lang_frame, text=self.localization.get('source_language')).pack(side='left')
         self.source_lang_var = tk.StringVar(value='auto')
         self.source_combo = ttk.Combobox(lang_frame, textvariable=self.source_lang_var, 
                                         values=self.get_language_list(), state='disabled', width=15)
         self.source_combo.pack(side='left', padx=10)
         
         # Detect button
-        self.detect_button = ttk.Button(lang_frame, text="Detect Now", command=self.detect_language)
+        self.detect_button = ttk.Button(lang_frame, text=self.localization.get('detect_now'), command=self.detect_language)
         self.detect_button.pack(side='left', padx=10)
         
         # Detection result
@@ -132,35 +139,35 @@ class SubtitleTranslatorGUI:
         self.detection_result.pack(side='left', padx=10)
         
         # Target language
-        ttk.Label(lang_frame, text="Target Language:").pack(side='right')
+        ttk.Label(lang_frame, text=self.localization.get('target_language')).pack(side='right')
         self.target_lang_var = tk.StringVar(value=self.config.get('default_target_language', 'ar'))
         self.target_combo = ttk.Combobox(lang_frame, textvariable=self.target_lang_var, 
                                         values=self.get_language_list(), width=15)
         self.target_combo.pack(side='right', padx=10)
         
         # Format selection frame
-        format_frame = ttk.LabelFrame(self.translation_frame, text="Format Options", padding=10)
+        format_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('format_options'), padding=10)
         format_frame.pack(fill='x', padx=10, pady=5)
         
         # Input format detection
-        ttk.Label(format_frame, text="Input Format:").grid(row=0, column=0, sticky='w')
-        self.input_format_var = tk.StringVar(value="Auto-detect")
+        ttk.Label(format_frame, text=self.localization.get('input_format')).grid(row=0, column=0, sticky='w')
+        self.input_format_var = tk.StringVar(value=self.localization.get('auto_detect'))
         self.input_format_label = ttk.Label(format_frame, textvariable=self.input_format_var, foreground='green')
         self.input_format_label.grid(row=0, column=1, sticky='w', padx=10)
         
         # Output format selection
-        ttk.Label(format_frame, text="Output Format:").grid(row=0, column=2, sticky='w', padx=(20,5))
+        ttk.Label(format_frame, text=self.localization.get('output_format')).grid(row=0, column=2, sticky='w', padx=(20,5))
         self.output_format_var = tk.StringVar(value='.srt')
         self.output_format_combo = ttk.Combobox(format_frame, textvariable=self.output_format_var, 
                                                values=['.srt', '.ass', '.vtt'], width=10)
         self.output_format_combo.grid(row=0, column=3, sticky='w', padx=10)
         
         # Translation options
-        options_frame = ttk.LabelFrame(self.translation_frame, text="Translation Options", padding=10)
+        options_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('translation_options'), padding=10)
         options_frame.pack(fill='x', padx=10, pady=5)
         
         # Translation engine
-        ttk.Label(options_frame, text="Engine:").grid(row=0, column=0, sticky='w')
+        ttk.Label(options_frame, text=self.localization.get('engine')).grid(row=0, column=0, sticky='w')
         self.engine_var = tk.StringVar(value=self.config.get('translation_engine', 'google'))
         self.engine_combo = ttk.Combobox(options_frame, textvariable=self.engine_var, 
                                         values=['google', 'microsoft'], width=15)
@@ -168,14 +175,14 @@ class SubtitleTranslatorGUI:
         
         # Backup option
         self.backup_var = tk.BooleanVar(value=self.config.get('create_backup', True))
-        ttk.Checkbutton(options_frame, text="Create backup", variable=self.backup_var).grid(row=0, column=2, padx=20)
+        ttk.Checkbutton(options_frame, text=self.localization.get('create_backup'), variable=self.backup_var).grid(row=0, column=2, padx=20)
         
         # Cache option
         self.cache_var = tk.BooleanVar(value=self.config.get('cache_enabled', True))
-        ttk.Checkbutton(options_frame, text="Use cache", variable=self.cache_var).grid(row=0, column=3, padx=20)
+        ttk.Checkbutton(options_frame, text=self.localization.get('use_cache'), variable=self.cache_var).grid(row=0, column=3, padx=20)
         
         # Progress frame
-        progress_frame = ttk.LabelFrame(self.translation_frame, text="Progress", padding=10)
+        progress_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('progress'), padding=10)
         progress_frame.pack(fill='x', padx=10, pady=5)
         
         # Progress bar
@@ -184,7 +191,7 @@ class SubtitleTranslatorGUI:
         self.progress_bar.pack(fill='x', pady=5)
         
         # Progress label
-        self.progress_label = ttk.Label(progress_frame, text="Ready")
+        self.progress_label = ttk.Label(progress_frame, text=self.localization.get('ready'))
         self.progress_label.pack()
         
         # Buttons frame
@@ -192,28 +199,28 @@ class SubtitleTranslatorGUI:
         button_frame.pack(fill='x', padx=10, pady=10)
         
         # Main buttons
-        self.translate_button = ttk.Button(button_frame, text="🚀 Start Translation", 
+        self.translate_button = ttk.Button(button_frame, text=self.localization.get('start_translation'), 
                                           command=self.start_translation, style='Accent.TButton')
         self.translate_button.pack(side='left', padx=5)
         
-        self.stop_button = ttk.Button(button_frame, text="⏹ Stop", 
+        self.stop_button = ttk.Button(button_frame, text=self.localization.get('stop'), 
                                      command=self.stop_translation, state='disabled')
         self.stop_button.pack(side='left', padx=5)
         
         # Preview button
-        ttk.Button(button_frame, text="👁 Preview", command=self.preview_file).pack(side='left', padx=5)
+        ttk.Button(button_frame, text=self.localization.get('preview'), command=self.preview_file).pack(side='left', padx=5)
         
         # Open output folder
-        ttk.Button(button_frame, text="📁 Open Output Folder", 
+        ttk.Button(button_frame, text=self.localization.get('open_output_folder'), 
                   command=self.open_output_folder).pack(side='right', padx=5)
         
     def create_batch_tab(self):
         """Create batch translation tab"""
         self.batch_frame = ttk.Frame(self.notebook)
-        self.notebook.add(self.batch_frame, text="📁 Batch Process")
+        self.notebook.add(self.batch_frame, text=self.localization.get('tab_batch_process'))
         
         # File list frame
-        list_frame = ttk.LabelFrame(self.batch_frame, text="Files to Translate", padding=10)
+        list_frame = ttk.LabelFrame(self.batch_frame, text=self.localization.get('files_to_translate'), padding=10)
         list_frame.pack(fill='both', expand=True, padx=10, pady=5)
         
         # File list with scrollbar
@@ -225,11 +232,11 @@ class SubtitleTranslatorGUI:
         self.file_tree = ttk.Treeview(list_container, columns=columns, show='headings', height=12)
         
         # Configure columns
-        self.file_tree.heading('Name', text='File Name')
-        self.file_tree.heading('Format', text='Format')
-        self.file_tree.heading('Source Lang', text='Source')
-        self.file_tree.heading('Target Lang', text='Target')
-        self.file_tree.heading('Status', text='Status')
+        self.file_tree.heading('Name', text=self.localization.get('file_name'))
+        self.file_tree.heading('Format', text=self.localization.get('format'))
+        self.file_tree.heading('Source Lang', text=self.localization.get('source'))
+        self.file_tree.heading('Target Lang', text=self.localization.get('target'))
+        self.file_tree.heading('Status', text=self.localization.get('status'))
         
         self.file_tree.column('Name', width=300)
         self.file_tree.column('Format', width=80)
@@ -255,30 +262,30 @@ class SubtitleTranslatorGUI:
         batch_controls.pack(fill='x', padx=10, pady=5)
         
         # Add files buttons
-        ttk.Button(batch_controls, text="➕ Add Files", command=self.add_batch_files).pack(side='left', padx=5)
-        ttk.Button(batch_controls, text="📁 Add Folder", command=self.add_batch_folder).pack(side='left', padx=5)
-        ttk.Button(batch_controls, text="🗑 Remove Selected", command=self.remove_selected_files).pack(side='left', padx=5)
-        ttk.Button(batch_controls, text="🗑 Clear All", command=self.clear_all_files).pack(side='left', padx=5)
+        ttk.Button(batch_controls, text=self.localization.get('add_files'), command=self.add_batch_files).pack(side='left', padx=5)
+        ttk.Button(batch_controls, text=self.localization.get('add_folder'), command=self.add_batch_folder).pack(side='left', padx=5)
+        ttk.Button(batch_controls, text=self.localization.get('remove_selected'), command=self.remove_selected_files).pack(side='left', padx=5)
+        ttk.Button(batch_controls, text=self.localization.get('clear_all'), command=self.clear_all_files).pack(side='left', padx=5)
         
         # Batch translation button
-        ttk.Button(batch_controls, text="🚀 Start Batch Translation", 
+        ttk.Button(batch_controls, text=self.localization.get('start_batch_translation'), 
                   command=self.start_batch_translation, style='Accent.TButton').pack(side='right', padx=5)
         
         # Batch progress
-        batch_progress_frame = ttk.LabelFrame(self.batch_frame, text="Batch Progress", padding=10)
+        batch_progress_frame = ttk.LabelFrame(self.batch_frame, text=self.localization.get('batch_progress'), padding=10)
         batch_progress_frame.pack(fill='x', padx=10, pady=5)
         
         self.batch_progress_var = tk.DoubleVar()
         self.batch_progress_bar = ttk.Progressbar(batch_progress_frame, variable=self.batch_progress_var, maximum=100)
         self.batch_progress_bar.pack(fill='x', pady=5)
         
-        self.batch_progress_label = ttk.Label(batch_progress_frame, text="Ready for batch processing")
+        self.batch_progress_label = ttk.Label(batch_progress_frame, text=self.localization.get('ready_for_batch'))
         self.batch_progress_label.pack()
         
     def create_settings_tab(self):
         """Create settings tab"""
         self.settings_frame = ttk.Frame(self.notebook)
-        self.notebook.add(self.settings_frame, text="⚙️ Settings")
+        self.notebook.add(self.settings_frame, text=self.localization.get('tab_settings'))
         
         # Create scrollable frame for settings
         canvas = tk.Canvas(self.settings_frame)
@@ -297,86 +304,101 @@ class SubtitleTranslatorGUI:
         scrollbar.pack(side="right", fill="y")
         
         # Translation settings
-        trans_settings = ttk.LabelFrame(scrollable_frame, text="Translation Settings", padding=10)
+        trans_settings = ttk.LabelFrame(scrollable_frame, text=self.localization.get('translation_settings'), padding=10)
         trans_settings.pack(fill='x', padx=10, pady=5)
         
         # Default languages
-        ttk.Label(trans_settings, text="Default Source Language:").grid(row=0, column=0, sticky='w', pady=2)
+        ttk.Label(trans_settings, text=self.localization.get('default_source_language')).grid(row=0, column=0, sticky='w', pady=2)
         self.default_source_var = tk.StringVar(value=self.config.get('default_source_language', 'en'))
         ttk.Combobox(trans_settings, textvariable=self.default_source_var, 
                     values=self.get_language_list(), width=15).grid(row=0, column=1, sticky='w', padx=10, pady=2)
         
-        ttk.Label(trans_settings, text="Default Target Language:").grid(row=1, column=0, sticky='w', pady=2)
+        ttk.Label(trans_settings, text=self.localization.get('default_target_language')).grid(row=1, column=0, sticky='w', pady=2)
         self.default_target_var = tk.StringVar(value=self.config.get('default_target_language', 'ar'))
         ttk.Combobox(trans_settings, textvariable=self.default_target_var, 
                     values=self.get_language_list(), width=15).grid(row=1, column=1, sticky='w', padx=10, pady=2)
         
         # Engine settings
-        ttk.Label(trans_settings, text="Default Translation Engine:").grid(row=2, column=0, sticky='w', pady=2)
+        ttk.Label(trans_settings, text=self.localization.get('default_translation_engine')).grid(row=2, column=0, sticky='w', pady=2)
         self.default_engine_var = tk.StringVar(value=self.config.get('translation_engine', 'google'))
         ttk.Combobox(trans_settings, textvariable=self.default_engine_var, 
                     values=['google', 'microsoft'], width=15).grid(row=2, column=1, sticky='w', padx=10, pady=2)
         
         # Performance settings
-        perf_settings = ttk.LabelFrame(scrollable_frame, text="Performance Settings", padding=10)
+        perf_settings = ttk.LabelFrame(scrollable_frame, text=self.localization.get('performance_settings'), padding=10)
         perf_settings.pack(fill='x', padx=10, pady=5)
         
         # Delay between requests
-        ttk.Label(perf_settings, text="Delay between requests (seconds):").grid(row=0, column=0, sticky='w', pady=2)
+        ttk.Label(perf_settings, text=self.localization.get('delay_between_requests')).grid(row=0, column=0, sticky='w', pady=2)
         self.delay_var = tk.DoubleVar(value=self.config.get('delay_between_requests', 0.1))
         delay_spin = tk.Spinbox(perf_settings, from_=0.0, to=5.0, increment=0.1, textvariable=self.delay_var, width=10)
         delay_spin.grid(row=0, column=1, sticky='w', padx=10, pady=2)
         
         # Max retries
-        ttk.Label(perf_settings, text="Maximum retries:").grid(row=1, column=0, sticky='w', pady=2)
+        ttk.Label(perf_settings, text=self.localization.get('maximum_retries')).grid(row=1, column=0, sticky='w', pady=2)
         self.retries_var = tk.IntVar(value=self.config.get('max_retries', 3))
         retry_spin = tk.Spinbox(perf_settings, from_=1, to=10, textvariable=self.retries_var, width=10)
         retry_spin.grid(row=1, column=1, sticky='w', padx=10, pady=2)
         
         # File settings
-        file_settings = ttk.LabelFrame(scrollable_frame, text="File Settings", padding=10)
+        file_settings = ttk.LabelFrame(scrollable_frame, text=self.localization.get('file_settings'), padding=10)
         file_settings.pack(fill='x', padx=10, pady=5)
         
         # Backup settings
         self.backup_setting_var = tk.BooleanVar(value=self.config.get('create_backup', True))
-        ttk.Checkbutton(file_settings, text="Create backup files automatically", 
+        ttk.Checkbutton(file_settings, text=self.localization.get('create_backup_auto'), 
                        variable=self.backup_setting_var).grid(row=0, column=0, sticky='w', pady=2)
         
         # Cache settings
         self.cache_setting_var = tk.BooleanVar(value=self.config.get('cache_enabled', True))
-        ttk.Checkbutton(file_settings, text="Enable translation cache", 
+        ttk.Checkbutton(file_settings, text=self.localization.get('enable_translation_cache'), 
                        variable=self.cache_setting_var).grid(row=1, column=0, sticky='w', pady=2)
         
         # Output suffix
-        ttk.Label(file_settings, text="Output file suffix:").grid(row=2, column=0, sticky='w', pady=2)
+        ttk.Label(file_settings, text=self.localization.get('output_file_suffix')).grid(row=2, column=0, sticky='w', pady=2)
         self.suffix_var = tk.StringVar(value=self.config.get('output_suffix', '_arabic'))
         ttk.Entry(file_settings, textvariable=self.suffix_var, width=15).grid(row=2, column=1, sticky='w', padx=10, pady=2)
         
         # UI settings
-        ui_settings = ttk.LabelFrame(scrollable_frame, text="Interface Settings", padding=10)
+        ui_settings = ttk.LabelFrame(scrollable_frame, text=self.localization.get('interface_settings'), padding=10)
         ui_settings.pack(fill='x', padx=10, pady=5)
         
         # UI language
-        ttk.Label(ui_settings, text="Interface Language:").grid(row=0, column=0, sticky='w', pady=2)
+        ttk.Label(ui_settings, text=self.localization.get('interface_language')).grid(row=0, column=0, sticky='w', pady=2)
         self.ui_lang_var = tk.StringVar(value=self.config.get('ui_language', 'en'))
-        ttk.Combobox(ui_settings, textvariable=self.ui_lang_var, 
-                    values=['en', 'ar'], width=15).grid(row=0, column=1, sticky='w', padx=10, pady=2)
+        ui_lang_combo = ttk.Combobox(ui_settings, textvariable=self.ui_lang_var, 
+                    values=['en', 'ar'], width=15)
+        ui_lang_combo.grid(row=0, column=1, sticky='w', padx=10, pady=2)
+        
+        # Language display mapping
+        lang_display = {'en': 'English', 'ar': 'العربية'}
+        ui_lang_combo.configure(values=[f"{k} - {v}" for k, v in lang_display.items()])
+        current_lang = self.config.get('ui_language', 'en')
+        ui_lang_combo.set(f"{current_lang} - {lang_display.get(current_lang, 'English')}")
+        
+        # Bind language change event
+        def on_lang_change(event):
+            selected = ui_lang_combo.get()
+            lang_code = selected.split(' - ')[0]
+            self.ui_lang_var.set(lang_code)
+        
+        ui_lang_combo.bind('<<ComboboxSelected>>', on_lang_change)
         
         # Buttons
         button_frame = ttk.Frame(scrollable_frame)
         button_frame.pack(fill='x', padx=10, pady=20)
         
-        ttk.Button(button_frame, text="💾 Save Settings", command=self.save_settings).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="🔄 Reset to Defaults", command=self.reset_settings).pack(side='left', padx=5)
-        ttk.Button(button_frame, text="📁 Open Config File", command=self.open_config_file).pack(side='right', padx=5)
+        ttk.Button(button_frame, text=self.localization.get('save_settings'), command=self.save_settings).pack(side='left', padx=5)
+        ttk.Button(button_frame, text=self.localization.get('reset_to_defaults'), command=self.reset_settings).pack(side='left', padx=5)
+        ttk.Button(button_frame, text=self.localization.get('open_config_file'), command=self.open_config_file).pack(side='right', padx=5)
         
     def create_statistics_tab(self):
         """Create statistics tab"""
         self.stats_frame = ttk.Frame(self.notebook)
-        self.notebook.add(self.stats_frame, text="📊 Statistics")
+        self.notebook.add(self.stats_frame, text=self.localization.get('tab_statistics'))
         
         # Session stats
-        session_frame = ttk.LabelFrame(self.stats_frame, text="Session Statistics", padding=10)
+        session_frame = ttk.LabelFrame(self.stats_frame, text=self.localization.get('session_statistics'), padding=10)
         session_frame.pack(fill='x', padx=10, pady=5)
         
         # Create text widget for stats
@@ -384,7 +406,7 @@ class SubtitleTranslatorGUI:
         self.stats_text.pack(fill='both', expand=True)
         
         # Cache stats
-        cache_frame = ttk.LabelFrame(self.stats_frame, text="Cache Statistics", padding=10)
+        cache_frame = ttk.LabelFrame(self.stats_frame, text=self.localization.get('cache_statistics'), padding=10)
         cache_frame.pack(fill='x', padx=10, pady=5)
         
         self.cache_stats_text = scrolledtext.ScrolledText(cache_frame, height=6, state='disabled')
@@ -394,8 +416,9 @@ class SubtitleTranslatorGUI:
         stats_buttons = ttk.Frame(self.stats_frame)
         stats_buttons.pack(fill='x', padx=10, pady=5)
         
-        ttk.Button(stats_buttons, text="🔄 Refresh", command=self.refresh_stats).pack(side='left', padx=5)
-        ttk.Button(stats_buttons, text="🗑 Clear Cache", command=self.clear_cache).pack(side='left', padx=5)
+        ttk.Button(stats_buttons, text=self.localization.get('refresh'), command=self.refresh_stats).pack(side='left', padx=5)
+        ttk.Button(stats_buttons, text=self.localization.get('clear_cache'), command=self.clear_cache).pack(side='left', padx=5)
+        ttk.Button(stats_buttons, text=self.localization.get('export_stats'), command=self.export_stats).pack(side='right', padx=5)
         ttk.Button(stats_buttons, text="📊 Export Stats", command=self.export_stats).pack(side='right', padx=5)
         
     def create_status_bar(self):
@@ -404,11 +427,11 @@ class SubtitleTranslatorGUI:
         self.status_frame.pack(fill='x', side='bottom')
         
         # Status label
-        self.status_label = ttk.Label(self.status_frame, text="Ready", relief='sunken')
+        self.status_label = ttk.Label(self.status_frame, text=self.localization.get('ready'), relief='sunken')
         self.status_label.pack(side='left', fill='x', expand=True, padx=2, pady=2)
         
         # File count label
-        self.file_count_label = ttk.Label(self.status_frame, text="Files: 0", relief='sunken')
+        self.file_count_label = ttk.Label(self.status_frame, text=f"{self.localization.get('files')}: 0", relief='sunken')
         self.file_count_label.pack(side='right', padx=2, pady=2)
         
     def setup_drag_drop(self):
@@ -421,7 +444,7 @@ class SubtitleTranslatorGUI:
     
     def create_drop_area(self):
         """Create a visual drop area"""
-        self.drop_frame = ttk.LabelFrame(self.translation_frame, text="🎯 Drag & Drop Area", padding=20)
+        self.drop_frame = ttk.LabelFrame(self.translation_frame, text=self.localization.get('drag_drop_area'), padding=20)
         self.drop_frame.pack(fill='x', padx=10, pady=10)
         
         # Create a more attractive drop area
@@ -429,7 +452,7 @@ class SubtitleTranslatorGUI:
         drop_container.pack(fill='x', expand=True)
         
         self.drop_label = ttk.Label(drop_container, 
-                                   text="📁 Drag subtitle files here (.srt, .ass, .vtt)\n💡 or click here to browse",
+                                   text=self.localization.get('drag_files_here'),
                                    justify='center',
                                    foreground='#666666',
                                    font=('Arial', 10),
@@ -441,7 +464,7 @@ class SubtitleTranslatorGUI:
         self.drop_visual_frame.pack(fill='x', pady=5, padx=20)
         
         # Status label for drop feedback
-        self.drop_status = ttk.Label(self.drop_visual_frame, text="Ready for files", 
+        self.drop_status = ttk.Label(self.drop_visual_frame, text=self.localization.get('ready_for_files'), 
                                     foreground='green', font=('Arial', 8),
                                     cursor='hand2')  # Add hand cursor
         self.drop_status.pack(pady=5)
@@ -544,15 +567,15 @@ class SubtitleTranslatorGUI:
         
         try:
             filetypes = [
-                ("All Subtitle Files", "*.srt;*.ass;*.vtt"),
-                ("SRT Files", "*.srt"),
-                ("ASS Files", "*.ass"), 
-                ("VTT Files", "*.vtt"),
-                ("All Files", "*.*")
+                (self.localization.get('all_subtitle_files'), "*.srt;*.ass;*.vtt"),
+                (self.localization.get('srt_files'), "*.srt"),
+                (self.localization.get('ass_files'), "*.ass"), 
+                (self.localization.get('vtt_files'), "*.vtt"),
+                (self.localization.get('all_files'), "*.*")
             ]
             
             filename = filedialog.askopenfilename(
-                title="Select Subtitle File",
+                title=self.localization.get('select_subtitle_file'),
                 filetypes=filetypes,
                 parent=self.root  # Set parent to keep dialog modal
             )
@@ -561,12 +584,12 @@ class SubtitleTranslatorGUI:
                 self.input_file_var.set(filename)
                 self.auto_output_file()
                 self.detect_input_format()
-                self.update_status(f"Selected: {os.path.basename(filename)}")
+                self.update_status(f"{self.localization.get('file_loaded')}: {os.path.basename(filename)}")
                 
                 # Update drop area status
-                self.drop_status.config(text=f"✅ File loaded: {os.path.basename(filename)}", 
+                self.drop_status.config(text=f"✅ {self.localization.get('file_loaded')}: {os.path.basename(filename)}", 
                                        foreground='green')
-                self.drop_label.config(text=f"📄 {os.path.basename(filename)}\n💡 Click to change file",
+                self.drop_label.config(text=f"📄 {os.path.basename(filename)}\n💡 {self.localization.get('browse')}",
                                       foreground='#0066cc')
         finally:
             self.dialog_open = False
@@ -1103,6 +1126,10 @@ class SubtitleTranslatorGUI:
     def save_settings(self):
         """Save current settings to config"""
         try:
+            # Check if language changed
+            old_language = self.config.get('ui_language', 'en')
+            new_language = self.ui_lang_var.get()
+            
             # Update config with current values
             self.config.set('default_source_language', self.default_source_var.get())
             self.config.set('default_target_language', self.default_target_var.get())
@@ -1112,19 +1139,52 @@ class SubtitleTranslatorGUI:
             self.config.set('create_backup', self.backup_setting_var.get())
             self.config.set('cache_enabled', self.cache_setting_var.get())
             self.config.set('output_suffix', self.suffix_var.get())
-            self.config.set('ui_language', self.ui_lang_var.get())
+            self.config.set('ui_language', new_language)
             
             # Save to file
             self.config.save_config()
             
-            messagebox.showinfo("Success", "Settings saved successfully!")
+            # If language changed, reload interface
+            if old_language != new_language:
+                self.change_language(new_language)
+                messagebox.showinfo(self.localization.get('success'), 
+                                  self.localization.get('settings_saved_restart') if 'settings_saved_restart' in self.localization.strings 
+                                  else "Settings saved! Interface language updated.")
+            else:
+                messagebox.showinfo(self.localization.get('success'), 
+                                  "Settings saved successfully!" if self.localization.language == 'en' 
+                                  else "تم حفظ الإعدادات بنجاح!")
             
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to save settings: {e}")
+            messagebox.showerror(self.localization.get('error'), f"Failed to save settings: {e}")
+    
+    def change_language(self, new_language):
+        """Change interface language"""
+        try:
+            # Update localization
+            self.localization.set_language(new_language)
+            
+            # Update window title
+            self.root.title(self.localization.get('app_title'))
+            
+            # Show restart message
+            restart_msg = ("Please restart the application to see all interface changes." 
+                         if new_language == 'en' 
+                         else "الرجاء إعادة تشغيل التطبيق لرؤية جميع تغييرات الواجهة.")
+            
+            messagebox.showinfo(
+                "Language Changed" if new_language == 'en' else "تم تغيير اللغة",
+                restart_msg
+            )
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to change language: {e}")
     
     def reset_settings(self):
         """Reset settings to defaults"""
-        result = messagebox.askyesno("Confirm", "Reset all settings to defaults?")
+        result = messagebox.askyesno(self.localization.get('warning', 'Confirm'), 
+                                   "Reset all settings to defaults?" if self.localization.language == 'en' 
+                                   else "إعادة تعيين جميع الإعدادات للافتراضي؟")
         if result:
             try:
                 # Reset config to defaults
@@ -1133,10 +1193,12 @@ class SubtitleTranslatorGUI:
                 # Update GUI with defaults
                 self.load_settings_to_gui()
                 
-                messagebox.showinfo("Success", "Settings reset to defaults!")
+                messagebox.showinfo(self.localization.get('success'), 
+                                  "Settings reset to defaults!" if self.localization.language == 'en'
+                                  else "تم إعادة تعيين الإعدادات للافتراضي!")
                 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to reset settings: {e}")
+                messagebox.showerror(self.localization.get('error'), f"Failed to reset settings: {e}")
     
     def load_settings_to_gui(self):
         """Load settings from config to GUI"""
@@ -1263,7 +1325,13 @@ Cache Performance:
         # Initialize display
         self.refresh_stats()
         self.load_settings_to_gui()
-        self.update_status("Ready - Drag files here or use Browse button")
+        
+        # Set status message based on language
+        ready_message = (f"{self.localization.get('ready')} - {self.localization.get('drag_files_here')}" 
+                        if self.localization.language == 'ar' 
+                        else f"{self.localization.get('ready')} - Drag files here or use Browse button")
+        
+        self.update_status(ready_message)
         
         # Start main loop
         self.root.mainloop()
