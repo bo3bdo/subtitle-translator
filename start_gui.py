@@ -121,7 +121,7 @@ def show_startup_splash():
     title_label.pack(pady=20)
     
     # Version
-    version_label = tk.Label(frame, text="Version 2.0", 
+    version_label = tk.Label(frame, text="Version 2.2.2", 
                             bg='#2c3e50', fg='#ecf0f1', font=('Arial', 10))
     version_label.pack()
     
@@ -170,7 +170,7 @@ def show_startup_splash():
 
 def main():
     """Main function to start the GUI application"""
-    print("Advanced Subtitle Translator v2.0")
+    print("Advanced Subtitle Translator v2.2.2")
     print("=" * 40)
     
     # Change to script directory

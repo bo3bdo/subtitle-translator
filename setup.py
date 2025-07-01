@@ -23,7 +23,7 @@ def get_version():
         with open(version_file, 'r') as f:
             exec(f.read())
             return locals()['__version__']
-    return '2.1.0'
+    return '2.2.2'
 
 setup(
     name='advanced-subtitle-translator',
@@ -34,7 +34,7 @@ setup(
     author='Advanced Subtitle Translator Team',
     author_email='contact@subtitle-translator.dev',
     url='https://github.com/yourusername/advanced-subtitle-translator',
-    download_url='https://github.com/yourusername/advanced-subtitle-translator/archive/v2.1.0.tar.gz',
+    download_url='https://github.com/yourusername/advanced-subtitle-translator/archive/v2.2.2.tar.gz',
     
     packages=find_packages(),
     py_modules=[

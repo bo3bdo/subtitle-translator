@@ -288,7 +288,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📈 Roadmap
 
-### Upcoming Features (v2.2)
+### Current Features (v2.2.2)
+- ✅ **Progress Saving & Resume**: Automatic progress saving with resume functionality
+- ✅ **Session Management**: Advanced session management with visual interface  
+- ✅ **Auto-Recovery**: Recover progress after interruptions or crashes
+
+### Upcoming Features (v2.3)
 - [ ] **Real-time Translation** - Live translation preview
 - [ ] **Cloud Sync** - Sync settings across devices
 - [ ] **Plugin System** - Custom translation engines

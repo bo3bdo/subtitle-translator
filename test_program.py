@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def test_basic_functionality():
     """Test basic functionality without translation"""
-    print("🧪 Testing Subtitle Translator v2.0...")
+    print("🧪 Testing Subtitle Translator v2.2.2...")
     
     try:
         from translate_subtitles import SubtitleTranslator

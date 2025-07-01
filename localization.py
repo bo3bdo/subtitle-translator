@@ -18,7 +18,7 @@ class LocalizationManager:
         if self.language == 'ar':
             return {
                 # Main window
-                'app_title': 'مترجم الترجمات المتقدم v2.0',
+                'app_title': 'مترجم الترجمات المتقدم v2.2.2',
                 
                 # Tabs
                 'tab_single_file': '📄 ملف واحد',
@@ -138,7 +138,7 @@ class LocalizationManager:
         else:  # Default English
             return {
                 # Main window
-                'app_title': 'Advanced Subtitle Translator v2.0',
+                'app_title': 'Advanced Subtitle Translator v2.2.2',
                 
                 # Tabs
                 'tab_single_file': '📄 Single File',

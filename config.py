@@ -30,7 +30,7 @@ class Config:
     # UI Language translations
     UI_TEXTS = {
         "en": {
-            "app_title": "Advanced Subtitle Translator v2.0",
+            "app_title": "Advanced Subtitle Translator v2.2.2",
             "welcome": "Welcome to the enhanced version 2!",
             "main_menu": "Main Menu:",
             "menu_options": {
@@ -95,14 +95,14 @@ class Config:
             "translation_errors": "Translation Errors",
             "cache_size": "Cache Size",
             "cache_hit_rate": "Cache Hit Rate",
-            "help_title": "Subtitle Translator v2.0 Help",
+            "help_title": "Subtitle Translator v2.2.2 Help",
             "error_loading_config": "Error loading config:",
             "error_saving_config": "Error saving config:",
             "settings_reset": "Settings reset to defaults",
             "operation_cancelled": "Operation cancelled"
         },
         "ar": {
-            "app_title": "مترجم الترجمات المتقدم v2.0",
+            "app_title": "مترجم الترجمات المتقدم v2.2.2",
             "welcome": "مرحباً بك في الإصدار الثاني المحسن!",
             "main_menu": "القائمة الرئيسية:",
             "menu_options": {
@@ -167,7 +167,7 @@ class Config:
             "translation_errors": "أخطاء الترجمة",
             "cache_size": "حجم الذاكرة المؤقتة",
             "cache_hit_rate": "معدل الاستفادة من الذاكرة",
-            "help_title": "مساعدة مترجم الترجمات v2.0",
+            "help_title": "مساعدة مترجم الترجمات v2.2.2",
             "error_loading_config": "خطأ في تحميل الإعدادات:",
             "error_saving_config": "خطأ في حفظ الإعدادات:",
             "settings_reset": "تم إعادة تعيين الإعدادات إلى القيم الافتراضية",
